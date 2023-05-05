@@ -50,10 +50,8 @@ class AICarGame(gym.Env):
         # Reset colors
         for i in range(0,len(self.checkpoints)-2):
             self.checkpoints[i].change_color((255,0,0))
-        
-        # get the intial state
-        initial_state = self.get_extended_state()
-        return initial_state
+
+        return self.get_extended_state()
 
     def step(self, action):
         # Move car based on action
