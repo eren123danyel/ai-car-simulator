@@ -3,8 +3,13 @@ import sys
 from gymcar import AICarGame
 from stable_baselines3 import DQN
 from stable_baselines3.common.vec_env import DummyVecEnv
+import time
 
 
+# Make an array for drawing graph
+start_time = time.time()
+x_axis = [0]
+y_axis = [-10000]
 
 # Game setup
 pygame.init()
@@ -16,7 +21,7 @@ running = True
 import game 
 
 # Create and vectorize env 
-env = DummyVecEnv([lambda: AICarGame(game.load_imgs()) for _ in range(20)])
+env = DummyVecEnv([lambda: AICarGame(game.load_imgs()) for _ in range(10)])
 
 # Set model
 model = DQN("MlpPolicy", env, verbose=1)
@@ -47,4 +52,4 @@ while running:
     pygame.display.flip()
 
     # Limits the screen to 30fps
-    clock.tick(30)
+    #clock.tick(30)

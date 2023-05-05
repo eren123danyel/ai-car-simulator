@@ -35,6 +35,7 @@ class AICarGame(gym.Env):
             if check.rot == 90:
                 check.posx = check.posx-30
                 check.posy = check.posy+25
+        
 
         # Start game 
         self.reset()
@@ -62,29 +63,33 @@ class AICarGame(gym.Env):
         #speed_penalty = -0.0001 * abs(math.dist((self.cx,self.cy),(self.player.x,self.player.y))) * abs(self.player.maxvel - self.player.vel)
         speed_penalty =  0
         # Check if time since last collision with checkpoint is over 30seconds
-        if time.time() > self.player.lastcol + 30:
+        if time.time() - self.player.lastcol > 30:
             self.reward += -9999999 + speed_penalty
             self.done = True
         # if colliding with the track
         if self.player.collide(self.imgs["trackbordermask"]):
-            self.reward += -9999999 + speed_penalty
+            self.reward += -9999 + speed_penalty
             self.done = True
 
         # if colliding with a checkpoint
         elif self.player.collide(self.checkpoints[self.index].get_mask(),self.checkpoints[self.index].posx,self.checkpoints[self.index].posy):
             self.player.lastcol = time.time()
             if self.index == len(self.checkpoints) - 1:
-                self.reward += 999999999999999999999999999999 + speed_penalty
+                self.reward += 999999999 + speed_penalty
                 self.done = True
             else:
-                self.reward += 9999999999 + speed_penalty
-                self.done = False
+                self.reward += 1000 + speed_penalty
             self.index += 1
         else:
             # Give a negative reward for not passing a checkpoint
             self.reward += speed_penalty
-            self.done = False
-
+        # If done
+        if self.done:
+            import main
+            # If the max reward was passed, add it to the list
+            if max(main.y_axis) < self.reward:
+                main.y_axis.append(self.reward)
+                main.x_axis.append(time.time() - main.start_time)
         state = self.get_extended_state()
 
         return state,self.reward,self.done,{"speed penalty": speed_penalty}
