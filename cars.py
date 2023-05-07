@@ -55,9 +55,9 @@ class AbstractCar:
         hit = mask.overlap(carmask,offset)
         return hit
 
-    def bounce(self):
-        self.vel = -self.vel
-        self.move()
+    #def bounce(self):
+    #    self.vel = -self.vel
+    #   self.move()
     
     def movement(self,action):
         moved = False
