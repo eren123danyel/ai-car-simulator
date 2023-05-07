@@ -5,12 +5,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.backends.backend_agg as agg
 import numpy as np
+import pygame
 
-def scale_img(img,scl):
-    import main
-    pygame = main.pygame
-    # Scale image by multiplying height and width by the same value
-    return pygame.transform.scale(img,(round(img.get_width()*scl),round(img.get_height()*scl)))
 
 
 
@@ -45,56 +41,24 @@ def draw_graph(x,y):
     canvas.draw()
     renderer = canvas.get_renderer()
     raw_data = renderer.tostring_rgb()
-    import main
-    surf = main.pygame.image.fromstring(raw_data, (width,height), "RGB")
+    plt.close()
+    surf = pygame.image.fromstring(raw_data, (width,height), "RGB")
     return surf
-
-
-
-def load_imgs():
-    # All assets from https://www.techwithtim.net/
-    import pygame
-    # Get all the cars
-    greencar = scale_img(pygame.image.load("imgs/green-car.png"),0.5)
-    greycar = scale_img(pygame.image.load("imgs/grey-car.png"),0.5)
-    purplecar = scale_img(pygame.image.load("imgs/purple-car.png"),0.5)
-    redcar = scale_img(pygame.image.load("imgs/red-car.png"),0.5)
-    whitecar = scale_img(pygame.image.load("imgs/white-car.png"),0.5)
-
-    finish = scale_img(pygame.image.load("imgs/finish.png"),0.8)
-    # get a mask of the image for collision detection
-    finishmask = pygame.mask.from_surface(finish)
-    # Scale grass because it's too small
-    grass = scale_img(pygame.image.load("imgs/grass.jpg"),2.1)
-    trackborder = scale_img(pygame.image.load("imgs/track-border.png"),0.8)
-    # get a mask of the image for collision detection
-    trackbordermask = pygame.mask.from_surface(trackborder)
-    # Scale track to be smaller
-    track = scale_img(pygame.image.load("imgs/track.png"),0.8)
-    return {
-        "greencar": greencar,
-        "greycar": greycar,
-        "purplecar": purplecar,
-        "redcar": redcar,
-        "whitecar": whitecar,
-        "finish": finish,
-        "finishmask": finishmask,
-        "grass": grass,
-        "trackborder": trackborder,
-        "trackbordermask": trackbordermask,
-        "track": track
-    }
-
 
 renderbool = True
 renderbool2 = True
-def game():
+# Some ui elements (get drawn later)
+gobackbtn = menu.Button(780+25,620,100,50,"Go Back")
+savemodelbtn = menu.Button(780+100*1+10+25,620,100,50,"Save Model")
+renderbtn = menu.Button(780+100*2+10*2+25,620,100,50,"Render:    ")
+raysbtn = menu.Button(805+100*3+10*3+25,620,150,50,"Rays & Checks:    ")
+# On and off text
+on = menu.Text("On",16,(0,255,0))
+off = menu.Text("Off", 16,(255,0,0))
+on1 = menu.Text("On",16,(0,255,0))
+off1 = menu.Text("Off", 16,(255,0,0))
+def ui_elements(render_graph=True,save_model=True):
     global renderbool, renderbool2
-    # Some ui elements (get drawn later)
-    gobackbtn = menu.Button(780+25,620,100,50,"Go Back")
-    savemodelbtn = menu.Button(780+100*1+10+25,620,100,50,"Save Model")
-    renderbtn = menu.Button(780+100*2+10*2+25,620,100,50,"Render:    ")
-    raysbtn = menu.Button(805+100*3+10*3+25,620,150,50,"Rays & Checks:    ")
     
     # If rendering is turned off
     if renderbtn.clicked():
@@ -105,46 +69,62 @@ def game():
     if raysbtn.clicked():
         renderbool2 ^= True
         time.sleep(0.5)
-
-    import main
-    # Train the model
-    main.model.learn(total_timesteps=1, reset_num_timesteps=False)
-    if renderbool:
-        for idx, env in enumerate(main.env.envs):
-            if idx == 0:
-                env.render()
-            else:
-                env.onlycar()
-
-
+    
 
     # Render some nice text
     menu.Text("AI Car Simulator",64).draw(720+280,50)
     
     # Render buttons 
-    savemodelbtn.draw()
+    if save_model:
+        savemodelbtn.draw()
     gobackbtn.draw()
     renderbtn.draw()
     raysbtn.draw()
     
 
     if renderbool:
-        menu.Text("On",16,(0,255,0)).draw((780+100*2+10*2+30+25,620))
+        on.draw((780+100*2+10*2+30+25,620))
     else:
-        menu.Text("Off", 16,(255,0,0)).draw((780+100*2+10*2+30+25,620))
+        off.draw((780+100*2+10*2+30+25,620))
 
     if renderbool2:
-        menu.Text("On",16,(0,255,0)).draw((805+100*3+10*3+55+25,620))
+        on1.draw((805+100*3+10*3+55+25,620))
     else:
-        menu.Text("Off", 16,(255,0,0)).draw((805+100*3+10*3+55+25,620))
+        off1.draw((805+100*3+10*3+55+25,620))
         
-
-    if savemodelbtn.clicked():
-        # Save the current model with the date and time
-        main.model.save("models/air-car-model-"+datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+    from main import model, x_axis,y_axis,screen
+    if save_model:
+        if savemodelbtn.clicked():
+            # Save the current model with the date and time
+            model.save("models/air-car-model-"+datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
 
     if gobackbtn.clicked():
        menu.currentmenu = "Main Menu"
-    import gymcar
+       menu.file_prompted = False
     # DRAW GRAPH
-    main.screen.blit(draw_graph(main.x_axis,main.y_axis), (720,100))
+    if render_graph:
+        screen.blit(draw_graph(x_axis,y_axis), (720,100))
+
+def game_load(new_model,vec_env,obs):
+    # Run pretained model
+    action, _states = new_model.predict(obs)
+    obs, rewards, dones, info = vec_env.step(action)
+    for idx, env in enumerate(vec_env.envs):
+        if idx == 0:
+            env.render()
+        else:
+            env.onlycar()
+    ui_elements(save_model=False,render_graph=False)
+
+def game():
+    # Train the model
+    from main import model, env
+    model.learn(total_timesteps=1, reset_num_timesteps=False)
+    if renderbool:
+        for idx, env in enumerate(env.envs):
+            if idx == 0:
+                env.render()
+            else:
+                env.onlycar()
+    ui_elements()
+

@@ -1,13 +1,13 @@
 import math
 import time
 import random
+import pygame
 
 def rotimage(img,topleft,rot):
-    import main
-    pygame = main.pygame
+    from main import screen
     rotimg = pygame.transform.rotate(img,rot)
     newrect = rotimg.get_rect(center=img.get_rect(topleft=topleft).center)
-    return main.screen.blit(rotimg, newrect.topleft)
+    return screen.blit(rotimg, newrect.topleft)
 
 class AbstractCar:
     def __init__(self,maxvel,rotvel,imgs):
@@ -50,8 +50,6 @@ class AbstractCar:
         self.move()
     
     def collide(self,mask,mx=0,my=0):
-        import main
-        pygame = main.pygame
         carmask = pygame.mask.from_surface(self.img)
         offset = (int(self.x-mx),int(self.y-my))
         hit = mask.overlap(carmask,offset)
@@ -95,16 +93,12 @@ class Checkpoint():
 
     
     def rotimage(self,rot):
-        import main
-        pygame = main.pygame
         rotimg = pygame.transform.rotate(self.img,rot)
         newrect = rotimg.get_rect(center=self.img.get_rect(topleft=(self.posx,self.posy)).center)
         self.img = rotimg
         self.posx,self.posy = newrect.topleft
 
     def change_color(self, new_color):
-        import main
-        pygame = main.pygame
         # Create a temporary surface with the same size as the image
         temp_surface = pygame.Surface(self.img.get_size(), pygame.SRCALPHA)
         
@@ -115,6 +109,5 @@ class Checkpoint():
         self.img = temp_surface
 
     def get_mask(self):
-        import main
-        return main.pygame.mask.from_surface(self.img)
+        return pygame.mask.from_surface(self.img)
     
