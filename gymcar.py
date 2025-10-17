@@ -5,10 +5,16 @@ import cars
 import time
 import torch
 import math
+import pygame
+    
+    
 
 class AICarGame(gym.Env):
     def __init__(self,imgs):
         super().__init__()
+        # import main here to avoid circular import
+        global x_axis, y_axis, screen, start_time
+        from main import x_axis, y_axis,screen,start_time
         self.index = 0
         self.imgs = imgs
         # Define which moves the ai can do
@@ -56,14 +62,14 @@ class AICarGame(gym.Env):
     def step(self, action):
         # Move car based on action
         self.player.movement(action)
-        
         # Calculate speed penalty
         #speed_penalty = -0.0001 * abs(math.dist((self.cx,self.cy),(self.player.x,self.player.y))) * abs(self.player.maxvel - self.player.vel)
-        speed_penalty =  0
+        speed_penalty =  -0.00005 * abs(math.dist((self.cx,self.cy),(self.player.x,self.player.y)))
         # Check if time since last collision with checkpoint is over 30seconds
         if time.time() - self.player.lastcol > 30:
             self.reward += -9999999 + speed_penalty
             self.done = True
+    
         # if colliding with the track
         if self.player.collide(self.imgs["trackbordermask"]):
             self.reward += -9999 + speed_penalty
@@ -73,36 +79,32 @@ class AICarGame(gym.Env):
         elif self.player.collide(self.checkpoints[self.index].get_mask(),self.checkpoints[self.index].posx,self.checkpoints[self.index].posy):
             self.player.lastcol = time.time()
             if self.index == len(self.checkpoints) - 1:
-                self.reward += 999999999 + speed_penalty
+                self.reward += 1000000 + speed_penalty
                 self.done = True
             else:
-                self.reward += 1000 + speed_penalty
+                self.reward += 5000 + speed_penalty
             self.index += 1
         else:
             # Give a negative reward for not passing a checkpoint
             self.reward += speed_penalty
         # If done
         if self.done:
-            import main
             # If the max reward was passed, add it to the list
-            if max(main.y_axis) < self.reward:
-                main.y_axis.append(self.reward)
-                main.x_axis.append(time.time() - main.start_time)
+            if max(y_axis) < self.reward:
+                y_axis.append(self.reward)
+                x_axis.append(time.time() - start_time)
         state = self.get_extended_state()
 
         return state,self.reward,self.done,{"speed penalty": speed_penalty}
     
     def render(self, mode="human"):
-        import main
-        import game
-        screen = main.screen
+        from game import renderbool2
         # Draw the imgs to screen
         screen.blit(self.imgs["grass"],(0,0))
         screen.blit(self.imgs["track"],(0,0))
         
-        
         # Draw the checkpoints
-        if game.renderbool2:
+        if renderbool2:
             for cp in self.checkpoints:
                 # Draw the checkpoint as green if it's been passed
                 if cp.idx == self.index:
@@ -113,9 +115,9 @@ class AICarGame(gym.Env):
         screen.blit(self.imgs["trackborder"],(0,0))
         
         # Draw rays if wanted
-        if game.renderbool2:
+        if renderbool2:
             for angle in self.ray_angles:
-                main.pygame.draw.line(screen, (0, 255, 0),
+                pygame.draw.line(screen, (0, 255, 0),
                                 (self.player.x + self.player.img.get_width() // 2,
                                 self.player.y + self.player.img.get_height() // 2),
                                 self.raycast(angle), 3)
