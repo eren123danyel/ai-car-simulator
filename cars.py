@@ -52,8 +52,7 @@ class AbstractCar:
     def collide(self,mask,mx=0,my=0):
         carmask = pygame.mask.from_surface(self.img)
         offset = (int(self.x-mx),int(self.y-my))
-        hit = mask.overlap(carmask,offset)
-        return hit
+        return mask.overlap(carmask,offset)
 
     #def bounce(self):
     #    self.vel = -self.vel

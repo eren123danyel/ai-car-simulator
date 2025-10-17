@@ -23,7 +23,7 @@ def draw_graph(x,y):
     ax.set_ylabel("Max reward")
     # Plot data
     ax.plot(x,y)
-    
+
     try:
         # Draw best fit line
         z = np.polyfit(x, y, 1)
@@ -35,7 +35,7 @@ def draw_graph(x,y):
         ax.legend(["Real data","Best fit"],loc="lower right")
     except:
         pass
-    
+
 
     canvas = agg.FigureCanvasAgg(fig)
     canvas.draw()

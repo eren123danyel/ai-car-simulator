@@ -97,7 +97,6 @@ def mainmenu():
     screen = import_screen()
     # Make sure currentmenu is available out-of-scope
     global currentmenu
-    buttons = []
     # Width and height
     width, height = (1280,720)
     # Title
@@ -105,12 +104,20 @@ def mainmenu():
     # Define sizes
     btnx = 200
     btny = 100
-    # First button
-    buttons.append(Button(width/2,height/3,btnx,btny,"Start",32))
-    # Second button
-    buttons.append(Button(width/2,height/3+btny*1.1+10,btnx,btny,"Load Saved",32))
-    # Third button
-    buttons.append(Button(width/2,height/3+btny*2.2+10*2,btnx,btny,"Quit",32))
+    buttons = [
+        Button(width / 2, height / 3, btnx, btny, "Start", 32),
+        Button(
+            width / 2,
+            height / 3 + btny * 1.1 + 10,
+            btnx,
+            btny,
+            "Load Saved",
+            32,
+        ),
+        Button(
+            width / 2, height / 3 + btny * 2.2 + 10 * 2, btnx, btny, "Quit", 32
+        ),
+    ]
     for btn in buttons:
         # Render button
         btn.draw()
